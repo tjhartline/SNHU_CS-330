@@ -1,0 +1,330 @@
+//In this file, I am saving all the different effects that I came across while messing
+//with the fragment shader. To apply and see the differnt effects, copy each snippet and
+//paste it into the fragmentShaderSource.glsl in place of the current text in the file
+//and run the program. To turn it back to the original (submitted version), I am putting
+//a snippet copy of the code here first. 
+//Note: I ended up with 6 different versions that all produce different effects on the scene.
+
+
+//----FINAL SUBMITTED FOR RUN FRAGMENT SHADER CODE--------------------------------------
+#version 330 core
+in vec3 FragPos;
+in vec3 Normal;
+in vec2 texCoord;
+in vec3 ViewDir;
+
+out vec4 FragColor;
+
+uniform sampler2D sphereTexture;
+uniform sampler2D coneTexture;
+uniform sampler2D planeTexture;
+uniform vec3 lightPos; // Position of the light source
+uniform int objectType;
+
+uniform vec3 updatedViewDir; // New view direction from keyboard input
+uniform vec3 updatedReflectionDir; // New reflection direction from keyboard input
+
+void main()
+{
+    vec4 sphereTex = texture(sphereTexture, texCoord);
+    vec4 coneTex = texture(coneTexture, texCoord);
+    vec4 planeTex = texture(planeTexture, texCoord);
+
+    // Calculate normalized normal and light direction
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+
+    // Calculate shadow factor (0.0 for surfaces in shadow, 1.0 for surfaces in light)
+    float shadowFactor = dot(norm, lightDir);
+    shadowFactor = clamp(shadowFactor, 0.0, 1.0);
+
+    vec4 finalColor;
+
+    if (objectType == 0) { // Red sphere
+        finalColor = sphereTex * vec4(1.0, 0.0, 0.0, 1.0) * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 1) { // Cone
+        finalColor = coneTex * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 2) { // Plane
+        vec2 reflectionTexCoord = vec2(0.5, 0.5) + updatedReflectionDir.xy * 0.5; // Adjust as needed
+        vec4 reflectedColor = texture(planeTexture, reflectionTexCoord);
+
+        float reflectionFactor = max(dot(updatedReflectionDir, updatedViewDir), 0.0);
+        finalColor = mix(planeTex, reflectedColor, reflectionFactor) * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 3) { // Yellow sphere
+        vec2 reflectionTexCoord = vec2(0.5, 0.5) + updatedReflectionDir.xy * 0.5; // Adjust as needed
+        vec4 reflectedColor = texture(planeTexture, reflectionTexCoord);
+
+        float reflectionFactor = max(dot(updatedReflectionDir, updatedViewDir), 0.0);
+        finalColor = mix(sphereTex, reflectedColor, reflectionFactor) * (0.3 + 0.7 + 0.6 * shadowFactor);
+    }
+
+    FragColor = finalColor;
+}
+//------------------------END of SNIPPET---------------------------------------------
+
+//-----REFLECTION CHANGES BASED ON SCENE POSITION WITH BOTH KEY COMMANDS AND MOUSE MOVEMENT---
+#version 330 core
+in vec3 FragPos;
+in vec3 Normal;
+in vec2 texCoord;
+in vec3 ViewDir;
+
+out vec4 FragColor;
+
+uniform sampler2D sphereTexture;
+uniform sampler2D coneTexture;
+uniform sampler2D planeTexture;
+uniform vec3 lightPos; // Position of the light source
+uniform int objectType;
+
+void main()
+{
+    vec4 sphereTex = texture(sphereTexture, texCoord);
+    vec4 coneTex = texture(coneTexture, texCoord);
+    vec4 planeTex = texture(planeTexture, texCoord);
+
+    // Calculate normalized normal and light direction
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+
+    // Calculate shadow factor (0.0 for surfaces in shadow, 1.0 for surfaces in light)
+    float shadowFactor = dot(norm, lightDir);
+    shadowFactor = clamp(shadowFactor, 0.0, 1.0);
+
+    vec4 finalColor;
+
+    if (objectType == 0) { // Red sphere
+        finalColor = sphereTex * vec4(1.0, 0.0, 0.0, 1.0) * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 1) { // Cone
+        finalColor = coneTex * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 2) { // Plane
+        vec3 reflectionDir = reflect(-ViewDir, norm); // Use the view direction for reflection
+        vec2 reflectionTexCoord = vec2(0.5, 0.5) + reflectionDir.xy * 0.5; // Adjust as needed
+        vec4 reflectedColor = texture(planeTexture, reflectionTexCoord);
+
+        float reflectionFactor = max(dot(reflectionDir, ViewDir), 0.0);
+        finalColor = mix(planeTex, reflectedColor, reflectionFactor) * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 3) { // Yellow sphere
+        vec3 reflectionDir = reflect(-ViewDir, norm); // Use the view direction for reflection
+        vec2 reflectionTexCoord = vec2(0.5, 0.5) + reflectionDir.xy * 0.5; // Adjust as needed
+        vec4 reflectedColor = texture(planeTexture, reflectionTexCoord);
+
+        float reflectionFactor = max(dot(reflectionDir, ViewDir), 0.0);
+        finalColor = mix(sphereTex, reflectedColor, reflectionFactor) * (0.3 + 0.7 + 0.6 * shadowFactor);
+    }
+
+    FragColor = finalColor;
+}
+//---------------END OF SNIPPET--------------------------------------------------------------
+
+//-----MOON REMAINS YELLOW, AND MIXES REFLECTION FROM PLANE AND ICE-CREAM BASED ON KEY COMMAND POSITIONS
+#version 330 core
+in vec3 FragPos;
+in vec3 Normal;
+in vec2 texCoord;
+in vec3 ViewDir;
+
+out vec4 FragColor;
+
+uniform sampler2D sphereTexture;
+uniform sampler2D coneTexture;
+uniform sampler2D planeTexture;
+uniform vec3 lightPos; // Position of the light source
+uniform int objectType;
+
+void main()
+{
+    vec4 sphereTex = texture(sphereTexture, texCoord);
+    vec4 coneTex = texture(coneTexture, texCoord);
+    vec4 planeTex = texture(planeTexture, texCoord);
+
+    // Calculate normalized normal and light direction
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+
+    // Calculate shadow factor (0.0 for surfaces in shadow, 1.0 for surfaces in light)
+    float shadowFactor = dot(norm, lightDir);
+    shadowFactor = clamp(shadowFactor, 0.0, 1.0);
+
+    vec4 finalColor;
+
+    if (objectType == 0) { // Red sphere
+        finalColor = sphereTex * vec4(1.0, 0.0, 0.0, 1.0) * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 1) { // Cone
+        finalColor = coneTex * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 2) { // Plane
+        vec3 reflectionDir = reflect(-ViewDir, norm); // Use the view direction for reflection
+        vec2 reflectionTexCoord = vec2(0.5, 0.5) + reflectionDir.xy * 0.5; // Adjust as needed
+        vec4 reflectedColor = texture(planeTexture, reflectionTexCoord);
+
+        float reflectionFactor = max(dot(reflectionDir, ViewDir), 0.0);
+        finalColor = mix(planeTex, reflectedColor, reflectionFactor) * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 3) { // Yellow sphere
+        finalColor = sphereTex * vec4(0.9, 0.9, 0.0, 1.0) * (0.3 + 0.7 + 0.6 * shadowFactor);
+    }
+
+    FragColor = finalColor;
+}
+//-----END OF SNIPPET----------------------------------------------------------------------
+//--REFLECTION CHANGE HAPPENS WITH MOON ROTATION INSTEAD OF SCENE--------------------------
+#version 330 core
+in vec3 FragPos;
+in vec3 Normal;
+in vec2 texCoord;
+in vec3 ViewDir;
+
+out vec4 FragColor;
+
+uniform sampler2D sphereTexture;
+uniform sampler2D coneTexture;
+uniform sampler2D planeTexture;
+uniform vec3 lightPos; // Position of the light source
+uniform int objectType;
+
+void main()
+{
+    vec4 sphereTex = texture(sphereTexture, texCoord);
+    vec4 coneTex = texture(coneTexture, texCoord);
+    vec4 planeTex = texture(planeTexture, texCoord);
+
+    // Calculate normalized normal and light direction
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+
+    // Calculate shadow factor (0.0 for surfaces in shadow, 1.0 for surfaces in light)
+    float shadowFactor = dot(norm, lightDir);
+    shadowFactor = clamp(shadowFactor, 0.0, 1.0);
+
+    vec4 finalColor;
+
+    if (objectType == 0) { // Red sphere
+        finalColor = sphereTex * vec4(1.0, 0.0, 0.0, 1.0) * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 1) { // Cone
+        finalColor = coneTex * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 2) { // Plane
+        finalColor = planeTex; // Use the plane's texture as the final color
+    }
+    else if (objectType == 3) { // Yellow sphere
+        vec3 reflectionDir = reflect(-lightDir, norm);
+        vec2 reflectionTexCoord = vec2(0.5, 0.5) + reflectionDir.xy * 0.5; // Adjust as needed
+        vec4 reflectedColor = texture(planeTexture, reflectionTexCoord);
+
+        float reflectionFactor = max(dot(reflectionDir, ViewDir), 0.0);
+        finalColor = mix(sphereTex, reflectedColor * 0.9, reflectionFactor) * (0.3 + 0.7 + 0.6 * shadowFactor);
+    }
+
+    FragColor = finalColor;
+}
+//------END OF SNIPPET---------------------------------------------------------------------
+//-----ONLY THE PLANES TEXTURE IS REFLECTED ON THE MOON AND THE BASED ON MOONS ROTATION------
+#version 330 core
+in vec3 FragPos;
+in vec3 Normal;
+in vec2 texCoord;
+in vec3 ViewDir;
+
+out vec4 FragColor;
+
+uniform sampler2D sphereTexture;
+uniform sampler2D coneTexture;
+uniform sampler2D planeTexture;
+uniform vec3 lightPos; // Position of the light source
+uniform int objectType;
+
+void main()
+{
+    vec4 sphereTex = texture(sphereTexture, texCoord);
+    vec4 coneTex = texture(coneTexture, texCoord);
+    vec4 planeTex = texture(planeTexture, texCoord);
+
+    // Calculate normalized normal and light direction
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+
+    // Calculate shadow factor (0.0 for surfaces in shadow, 1.0 for surfaces in light)
+    float shadowFactor = dot(norm, lightDir);
+    shadowFactor = clamp(shadowFactor, 0.0, 1.0);
+
+    vec4 finalColor;
+
+    if (objectType == 0) { // Red sphere
+        finalColor = sphereTex * vec4(1.0, 0.0, 0.0, 1.0) * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 1) { // Cone
+        finalColor = coneTex * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 2) { // Plane
+        finalColor = planeTex; // Use the plane's texture as the final color
+    }
+    else if (objectType == 3) { // Yellow sphere
+        vec3 reflectionDir = reflect(-lightDir, norm);
+        vec2 reflectionTexCoord = vec2(0.5, 0.5) + reflectionDir.xy * 0.5; // Adjust as needed
+        vec4 reflectedColor = texture(planeTexture, reflectionTexCoord);
+
+        float reflectionFactor = max(dot(reflectionDir, ViewDir), 0.0);
+        finalColor = reflectedColor * (0.3 + 0.7 + 0.6 * shadowFactor);
+    }
+
+    FragColor = finalColor;
+}
+//-----END OF SNIPPET----------------------------------------------------------------------
+//---SHADOWING WITHOUT REFLECTIVE SURFACES-------------------------------------------------
+#version 330 core
+in vec3 FragPos;
+in vec3 Normal;
+in vec2 texCoord;
+in vec3 ViewDir;
+
+out vec4 FragColor;
+
+uniform sampler2D sphereTexture;
+uniform sampler2D coneTexture;
+uniform sampler2D planeTexture;
+uniform vec3 lightPos; // Position of the light source
+uniform int objectType;
+
+void main()
+{
+    vec4 sphereTex = texture(sphereTexture, texCoord);
+    vec4 coneTex = texture(coneTexture, texCoord);
+    vec4 planeTex = texture(planeTexture, texCoord);
+
+    // Calculate normalized normal and light direction
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPos - FragPos);
+
+    // Calculate shadow factor (0.0 for surfaces in shadow, 1.0 for surfaces in light)
+    float shadowFactor = dot(norm, lightDir);
+    shadowFactor = clamp(shadowFactor, 0.0, 1.0);
+
+    vec4 finalColor;
+
+    if (objectType == 0) { // Red sphere
+        finalColor = sphereTex * vec4(1.0, 0.0, 0.0, 1.0) * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 1) { // Cone
+        finalColor = coneTex * (0.3 + 0.7 * shadowFactor);
+    }
+    else if (objectType == 2) { // Plane
+        finalColor = planeTex; // Use the plane's texture as the final color
+    }
+    else if (objectType == 3) { // Yellow sphere
+        finalColor = vec4(0.9, 0.9, 0.0, 1.0) * (0.3 + 0.7 + 0.6 * shadowFactor);
+    }
+
+    FragColor = finalColor;
+}
+//------END OF SNIPPET---------------------------------------------------------------------
+
+//---END OF ALL SNIPPETS-------------------------------------------------------------------
